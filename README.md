@@ -6,8 +6,8 @@ This is a simple script that run for you 3 docker images:
 - Jbosse fuse (you need to build this image yourself): https://github.com/paoloantinori/dockerfiles/tree/master/centos/fuse
 
 After that it creates a fabric and update the configuration to authenticate using the openldap server. In this way you will be able to log in in to karaf console or hawtio using credentials stored in openldap:
-- user: fuseldap password: fuseldap groupe: admin
-- user: notfuseldap password: notfuseldap groupe: none
+- user: `fuseldap` password: `fuseldap` group: `admin`
+- user: `notfuseldap` password: `notfuseldap` group: `none`
 
 when the script finish you should be able to check fuse container's local ports with:
 ```
@@ -32,7 +32,7 @@ The build process will extract in the Docker image all the zip files it will fin
 	docker pull pantinor/fuse
 	
     # build your docker fuse image. you are expected to have either a copy of jboss-fuse-full-6.1.0.redhat-379.zip or a link to that file in the current folder.
-    docker build -rm -t fuse6.1 .
+    docker build --rm -t fuse6.1 .
 
 
 
