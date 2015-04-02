@@ -1,15 +1,19 @@
 # Jboss Fuse Ldap authentication lab
+`sh fuseLdap.sh`
 
 This is a simple script that run for you 3 docker images:
 - OpenLdap with preloaded users/groups data: valdar/ldapfuseusers:1.0.0
-- PhpLdapAdmin (just to have a convenient way to visualize/modifiy ldap contents): osixia/phpldapadmin:0.5.0 
-- Jbosse fuse (you need to build this image yourself): https://github.com/paoloantinori/dockerfiles/tree/master/centos/fuse
+  - address: `localhost:389` admin dn: `cn=admin,dc=example,dc=org` admin password: `admin` 
+- PhpLdapAdmin (just to have a convenient way to visualize/modifiy ldap contents): osixia/phpldapadmin:0.5.0
+  - address: `https://localhost` admin dn: `cn=admin,dc=example,dc=org` admin password: `admin` 
+- Jbosse fuse (**you need to build this image yourself**): https://github.com/paoloantinori/dockerfiles/tree/master/centos/fuse
 
 After that it creates a fabric and update the configuration to authenticate using the openldap server. In this way you will be able to log in in to karaf console or hawtio using credentials stored in openldap:
 - user: `fuseldap` password: `fuseldap` group: `admin`
 - user: `notfuseldap` password: `notfuseldap` group: `none`
 
-when the script finish you should be able to check fuse container's local ports with:
+## Interacting with the Fuse container
+When the script finish you should be able to check fuse container's local ports with:
 ```
 $ docker ps
 CONTAINER ID        IMAGE                        COMMAND                CREATED             STATUS              PORTS                                                                                                                                                  NAMES
@@ -17,6 +21,8 @@ CONTAINER ID        IMAGE                        COMMAND                CREATED 
 398aa9b12fc8        osixia/phpldapadmin:0.5.0    "/sbin/my_init"        About an hour ago   Up About an hour    80/tcp, 0.0.0.0:443->443/tcp                                                                                                                           phpldapadmin        
 38b8e0885dbf        valdar/ldapfuseusers:1.0.0   "/sbin/my_init"        About an hour ago   Up About an hour    0.0.0.0:389->389/tcp                                                                                                                                   openldap 
 ```
+in this example the hawtio console would be at `http://localhost:49156`, activeMQ at `localhost:49154`, karaf console at `localhost:49155` and ssh into the container at `localhost:49158`.
+
 ## NOTE Before launching the script:
 Before launching the script you need to build fuse6.1 image yourself by download JBoss Fuse distribution from 
 

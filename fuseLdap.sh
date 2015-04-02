@@ -66,8 +66,10 @@ set -e
 
 # create your lab
 docker run -t -i -p 389:389 -e SERVER_NAME=ldap.my-compagny.com --name openldap -d valdar/ldapfuseusers:1.0.0
-docker run -t -i -p 443:443 --link openldap:openldapserver -e LDAP_HOSTS=openldapserver --name phpldapadmin -d osixia/phpldapadmin
-docker run -d -t -i $EXPOSE_PORTS --link openldap:openldapserver --name root fuse6.1
+# assign ip addresses to env variable, despite they should be constant on the same machine across sessions
+IP_LDAP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' openldap)
+docker run -t -i -p 443:443 -e LDAP_HOSTS=$IP_LDAP --name phpldapadmin -d osixia/phpldapadmin
+docker run -d -t -i $EXPOSE_PORTS --name root fuse6.1
 
 # assign ip addresses to env variable, despite they should be constant on the same machine across sessions
 IP_ROOT=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' root)
@@ -118,6 +120,9 @@ git checkout 1.1
 
 #add xml ldap configuration to versio 1.1. of default profile
 cp ../ldap-module.xml fabric/profiles/default.profile/
+#add configuration of ldaphost
+touch fabric/profiles/default.profile/ldap.server.properties
+echo "ldaphostserver=$IP_LDAP" >> fabric/profiles/default.profile/ldap.server.properties
 #add a config line to io.fabric8.agent.properties in versio 1.1. of default profile
 printf "\nbundle.ldap-realm=blueprint:profile:ldap-module.xml" >> fabric/profiles/default.profile/io.fabric8.agent.properties
 
@@ -128,6 +133,8 @@ git commit -a -m "Ldap authentication confiuration"
 git push origin 1.1
 cd ..
 rm -rf ./tmp-git
+
+sleep 5
 
 #upgrade root container to the new configuration
 ssh2fabric "fabric:container-upgrade --all 1.1"
