@@ -8,29 +8,29 @@
 # and our fuse insance which we are going to configure for autenticating against the ldap server.
 #
 # Dependencies:
-# - docker 
+# - docker
 # - sshpass, used to avoid typing the pass everytime (not needed if you are invoking the commands manually)
-# to install on Fedora/Centos/Rhel: 
+# to install on Fedora/Centos/Rhel:
 # sudo yum install -y docker-io sshpass
 # - fuse6.1 docker image:
 #   1) download docker file:
 #   wget https://raw.github.com/paoloantinori/dockerfiles/master/centos/fuse/fuse/Dockerfile
 #
-#   2) download Jboss fuse 6.1 from http://www.jboss.org/products/fuse zip and place it in the same directoryof the Dokerfile
+#   2) download Jboss fuse 6.2.1 from http://www.jboss.org/products/fuse zip and place it in the same directoryof the Dokerfile
 #   NOTE: you are expected to have either a copy of jboss-fuse-*.zip or a link to that file in the current folder.
-#	
+#
 #   3) check if base image has been updated:
 #   docker pull pantinor/fuse
 #
-#   4) build your docker fuse image: 
-#   docker build -rm -t fuse6.1 .
+#   4) build your docker fuse image:
+#   docker build -rm -t fuse6.2.1 .
 #
 # Prerequesites:
 # - run docker in case it's not already
 # sudo service docker start
 #
 # Notes:
-# - if you run the commands, typing them yourself in a shell, you probably won't need all the ssh aliases 
+# - if you run the commands, typing them yourself in a shell, you probably won't need all the ssh aliases
 #   or the various "sleep" invocations
 # - as you may see this script is based on sleep commands, that maybe too short if your hardware is much slower than mine.
 #   increase those sleep time if you have to
@@ -39,6 +39,9 @@
 ################################################################################################
 #####             Preconfiguration and helper functions. Skip if not interested.           #####
 ################################################################################################
+# load helper functions
+. ./helper_functions.sh
+
 
 # scary but it's just for better logging if you run with "sh -x"
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
@@ -50,11 +53,11 @@ ulimit -n 4096
 ########## docker lab configuration
 
 # remove old docker containers with the same names
-docker stop -t 0 root  
-docker stop -t 0 openldap 
+docker stop -t 0 root
+docker stop -t 0 openldap
 docker stop -t 0 phpldapadmin
-docker rm root 
-docker rm openldap 
+docker rm root
+docker rm openldap
 docker rm phpldapadmin
 
 # expose ports to localhost, uncomment to enable always
@@ -69,7 +72,7 @@ docker run -t -i -p 389:389 -e SERVER_NAME=ldap.my-compagny.com --name openldap 
 # assign ip addresses to env variable, despite they should be constant on the same machine across sessions
 IP_LDAP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' openldap)
 docker run -t -i -p 443:443 -e LDAP_HOSTS=$IP_LDAP --name phpldapadmin -d osixia/phpldapadmin
-docker run -d -t -i $EXPOSE_PORTS --name root fuse6.1
+docker run -d -t -i $EXPOSE_PORTS --name root fuse6.2.1
 
 # assign ip addresses to env variable, despite they should be constant on the same machine across sessions
 IP_ROOT=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' root)
@@ -77,12 +80,14 @@ IP_ROOT=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' root)
 ########### aliases to preconfigure ssh and scp verbose to type options
 
 # full path of your ssh, used by the following helper aliases
-SSH_PATH=$(which ssh) 
+SSH_PATH=$(which ssh)
 ### ssh aliases to remove some of the visual clutter in the rest of the script
 # alias to connect to your docker images
 alias ssh2host="$SSH_PATH -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o LogLevel=ERROR fuse@$IP_ROOT"
 # alias to connect to the ssh server exposed by JBoss Fuse. uses sshpass to script the password authentication
-alias ssh2fabric="sshpass -p admin $SSH_PATH -p 8101 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o LogLevel=ERROR admin@$IP_ROOT"
+alias ssh2fabric="sshpass -p admin $SSH_PATH -p 8101 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o LogLevel=ERROR  -oHostKeyAlgorithms=+ssh-dss admin@$IP_ROOT"
+SSH2FABRIC="sshpass -p admin $SSH_PATH -p 8101 -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -o PreferredAuthentications=password -o LogLevel=ERROR  -oHostKeyAlgorithms=+ssh-dss admin@$IP_ROOT"
+
 
 ################################################################################################
 #####                             Tutorial starts here                                     #####
@@ -92,17 +97,21 @@ echo "waiting 10 sec to ssh into the root container"
 sleep 10
 
 # start fuse on root node
-ssh2host "/opt/rh/jboss-fuse-6.1.0.redhat-379/bin/start" 
+# workaround for https://issues.jboss.org/browse/ENTESB-4894
+ssh2host  "mv /opt/rh/jboss-fuse-6.2.1.redhat-084/fabric/import/fabric/profiles/mq/amq.profile/org.apache.karaf.command.acl.ssh.properties /opt/rh/org.apache.karaf.command.acl.ssh.properties1"
+ssh2host  "mv /opt/rh/jboss-fuse-6.2.1.redhat-084/fabric/import/fabric/profiles/jboss/fuse/full.profile/org.apache.karaf.command.acl.ssh.properties /opt/rh/org.apache.karaf.command.acl.shell.properties2"
+
+ssh2host "/opt/rh/jboss-*/bin/start"
 echo "waiting the Fuse startup for 30 sec"
 sleep 30
 
 ############################# here you are starting to interact with Fuse/Karaf
 # If you want to type the commands manually you have to connect to Karaf. You can do it either with ssh or with the "client" command.
-# Ex. 
-# ssh2fabric 
+# Ex.
+# ssh2fabric
 
 # create a new fabric
-ssh2fabric "fabric:create --clean -r localip -g localip --wait-for-provisioning" 
+ssh2fabric "fabric:create --clean -r localip -g localip  --wait-for-provisioning"
 
 # show current containers
 ssh2fabric "container-list"
