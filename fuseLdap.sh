@@ -39,9 +39,6 @@
 ################################################################################################
 #####             Preconfiguration and helper functions. Skip if not interested.           #####
 ################################################################################################
-# load helper functions
-. ./helper_functions.sh
-
 
 # scary but it's just for better logging if you run with "sh -x"
 export PS4='+(${BASH_SOURCE}:${LINENO}): ${FUNCNAME[0]:+${FUNCNAME[0]}(): }'
@@ -71,7 +68,7 @@ set -e
 docker run -t -i -p 389:389 -e SERVER_NAME=ldap.my-compagny.com --name openldap -d valdar/ldapfuseusers:1.0.0
 # assign ip addresses to env variable, despite they should be constant on the same machine across sessions
 IP_LDAP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' openldap)
-docker run -t -i -p 443:443 -e LDAP_HOSTS=$IP_LDAP --name phpldapadmin -d osixia/phpldapadmin
+docker run -t -i -p 443:443 -e PHPLDAPADMIN_LDAP_HOSTS=$IP_LDAP --name phpldapadmin -d osixia/phpldapadmin:0.6.8
 docker run -d -t -i $EXPOSE_PORTS --name root fuse6.2.1
 
 # assign ip addresses to env variable, despite they should be constant on the same machine across sessions
@@ -138,7 +135,7 @@ printf "\nbundle.ldap-realm=blueprint:profile:ldap-module.xml" >> fabric/profile
 git add *
 git config user.email "fuse@ldap.org"
 git config user.name "Mr Fuse Ldap"
-git commit -a -m "Ldap authentication confiuration"
+git commit -a -m "Ldap authentication configuration"
 git push origin 1.1
 cd ..
 rm -rf ./tmp-git
