@@ -68,7 +68,7 @@ set -e
 docker run -t -i -p 389:389 -e SERVER_NAME=ldap.my-compagny.com --name openldap -d valdar/ldapfuseusers:1.0.0
 # assign ip addresses to env variable, despite they should be constant on the same machine across sessions
 IP_LDAP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' openldap)
-docker run -t -i -p 443:443 -e PHPLDAPADMIN_LDAP_HOSTS=$IP_LDAP --name phpldapadmin -d osixia/phpldapadmin:0.6.8
+docker run -t -i -p 6443:443 -e PHPLDAPADMIN_LDAP_HOSTS=$IP_LDAP --name phpldapadmin -d osixia/phpldapadmin:0.6.9
 docker run -d -t -i $EXPOSE_PORTS --name root fuse6.2.1
 
 # assign ip addresses to env variable, despite they should be constant on the same machine across sessions
