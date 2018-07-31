@@ -1,35 +1,71 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xmlns:jaas="http://karaf.apache.org/xmlns/jaas/v1.0.0"
-  xmlns:ext="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.0.0"
-  xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0"
-           xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
+<blueprint xmlns="http://www.osgi.org/xmlns/blueprint/v1.0.0" 
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+  xmlns:jaas="http://karaf.apache.org/xmlns/jaas/v1.0.0" 
+  xmlns:ext="http://aries.apache.org/blueprint/xmlns/blueprint-ext/v1.0.0" 
+  xmlns:cm="http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0" xsi:schemaLocation="http://www.osgi.org/xmlns/blueprint/v1.0.0 http://www.osgi.org/xmlns/blueprint/v1.0.0/blueprint.xsd
 				http://aries.apache.org/blueprint/xmlns/blueprint-cm/v1.1.0 http://aries.apache.org/schemas/blueprint-cm/blueprint-cm-1.1.0.xsd
 				http://camel.apache.org/schema/blueprint http://camel.apache.org/schema/blueprint/camel-blueprint.xsd">
 
+  <type-converters>
+    <bean class="org.apache.karaf.jaas.modules.properties.PropertiesConverter"/>
+  </type-converters>
 
-  <cm:property-placeholder persistent-id="ldap.server" update-strategy="none" >
+  <!-- Allow usage of System properties, especially the karaf.base property -->
+  <ext:property-placeholder placeholder-prefix="$[" placeholder-suffix="]"/>
+
+  <!-- AdminConfig property place holder for the org.apache.karaf.jaas  -->
+  <cm:property-placeholder persistent-id="io.fabric8.jaas" update-strategy="reload">
     <cm:default-properties>
+      <cm:property name="encryption.name" value="basic"/>
+      <cm:property name="encryption.enabled" value="true"/>
+      <cm:property name="encryption.prefix" value="{CRYPT}"/>
+      <cm:property name="encryption.suffix" value="{CRYPT}"/>
+      <cm:property name="encryption.algorithm" value="MD5"/>
+      <cm:property name="encryption.encoding" value="hexadecimal"/>
+      <cm:property name="detailed.login.exception" value="false"/>
+      <cm:property name="audit.file.enabled" value="true"/>
+      <cm:property name="audit.file.file" value="$[karaf.data]/security/audit.log"/>
+      <cm:property name="audit.eventadmin.enabled" value="true"/>
+      <cm:property name="audit.eventadmin.topic" value="org/apache/karaf/login"/>
       <cm:property name="ldaphostserver" value="localhost"/>
     </cm:default-properties>
   </cm:property-placeholder>
-  <jaas:config name="karaf" rank="100">
-    <jaas:module className="io.fabric8.jaas.ZookeeperLoginModule" flags="sufficient"/>
+
+  <jaas:config name="karaf" rank="200">
+    <jaas:module className="io.fabric8.jaas.ZookeeperLoginModule" flags="sufficient">
+        enabled = ${audit.file.enabled}
+        file = ${audit.file.file}
+        encryption.name = ${encryption.name}
+        encryption.enabled = ${encryption.enabled}
+        encryption.prefix = ${encryption.prefix}
+        encryption.suffix = ${encryption.suffix}
+        encryption.algorithm = ${encryption.algorithm}
+        encryption.encoding = ${encryption.encoding}
+        path = /fabric/authentication/users
+    </jaas:module>
+    <jaas:module className="org.apache.karaf.jaas.modules.audit.FileAuditLoginModule" flags="optional">
+        enabled = ${audit.file.enabled}
+        file = ${audit.file.file}
+    </jaas:module>
+    <jaas:module className="org.apache.karaf.jaas.modules.audit.EventAdminAuditLoginModule" flags="optional">
+        enabled = ${audit.eventadmin.enabled}
+        topic = ${audit.eventadmin.topic}
+    </jaas:module>
     <jaas:module className="org.apache.karaf.jaas.modules.ldap.LDAPLoginModule" flags="sufficient">
-      initialContextFactory=com.sun.jndi.ldap.LdapCtxFactory
-      connection.username=cn=admin,dc=example,dc=org
-      connection.password=admin
-      connection.protocol=
-      connection.url=ldap://${ldaphostserver}:389
-      user.base.dn=ou=People,dc=example,dc=org
-      user.filter=(uid=%u)
-      user.search.subtree=true
-      role.base.dn=ou=Groups,dc=example,dc=org
-      role.name.attribute=cn
-      role.filter=(memberuid=%u)
-      role.search.subtree=true
-      authentication=simple
+        initialContextFactory=com.sun.jndi.ldap.LdapCtxFactory
+        connection.username=cn=admin,dc=example,dc=org
+        connection.password=admin
+        connection.protocol=
+        connection.url=ldap://${ldaphostserver}:389
+        user.base.dn=ou=People,dc=example,dc=org
+        user.filter=(uid=%u)
+        user.search.subtree=true
+        role.base.dn=ou=Groups,dc=example,dc=org
+        role.name.attribute=cn
+        role.filter=(memberuid=%u)
+        role.search.subtree=true
+        authentication=simple
     </jaas:module>
   </jaas:config>
 </blueprint>

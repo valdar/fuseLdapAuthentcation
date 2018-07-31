@@ -69,7 +69,7 @@ docker run -t -i -p 389:389 -e SERVER_NAME=ldap.my-compagny.com --name openldap 
 # assign ip addresses to env variable, despite they should be constant on the same machine across sessions
 IP_LDAP=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' openldap)
 docker run -t -i -p 6443:443 -e PHPLDAPADMIN_LDAP_HOSTS=$IP_LDAP --name phpldapadmin -d osixia/phpldapadmin:0.6.9
-docker run -d -t -i $EXPOSE_PORTS --name root fuse6.2.1
+docker run -d -t -i $EXPOSE_PORTS --name root fuse6.3
 
 # assign ip addresses to env variable, despite they should be constant on the same machine across sessions
 IP_ROOT=$(docker inspect --format '{{ .NetworkSettings.IPAddress }}' root)
@@ -94,10 +94,6 @@ echo "waiting 10 sec to ssh into the root container"
 sleep 10
 
 # start fuse on root node
-# workaround for https://issues.jboss.org/browse/ENTESB-4894
-ssh2host  "mv /opt/rh/jboss-fuse-6.2.1.redhat-084/fabric/import/fabric/profiles/mq/amq.profile/org.apache.karaf.command.acl.ssh.properties /opt/rh/org.apache.karaf.command.acl.ssh.properties1"
-ssh2host  "mv /opt/rh/jboss-fuse-6.2.1.redhat-084/fabric/import/fabric/profiles/jboss/fuse/full.profile/org.apache.karaf.command.acl.ssh.properties /opt/rh/org.apache.karaf.command.acl.shell.properties2"
-
 ssh2host "/opt/rh/jboss-*/bin/start"
 echo "waiting the Fuse startup for 30 sec"
 sleep 30
@@ -127,8 +123,8 @@ git checkout 1.1
 #add xml ldap configuration to versio 1.1. of default profile
 cp ../ldap-module.xml fabric/profiles/default.profile/
 #add configuration of ldaphost
-touch fabric/profiles/default.profile/ldap.server.properties
-echo "ldaphostserver=$IP_LDAP" >> fabric/profiles/default.profile/ldap.server.properties
+echo ""  >> fabric/profiles/default.profile/io.fabric8.jaas.properties
+echo "ldaphostserver=$IP_LDAP" >> fabric/profiles/default.profile/io.fabric8.jaas.properties
 #add a config line to io.fabric8.agent.properties in versio 1.1. of default profile
 printf "\nbundle.ldap-realm=blueprint:profile:ldap-module.xml" >> fabric/profiles/default.profile/io.fabric8.agent.properties
 

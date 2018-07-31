@@ -4,7 +4,7 @@
 This is a simple script that run for you 3 docker images:
 - OpenLdap with preloaded users/groups data: valdar/ldapfuseusers:1.0.0
   - address: `localhost:389` admin dn: `cn=admin,dc=example,dc=org` admin password: `admin`
-- PhpLdapAdmin (just to have a convenient way to visualize/modifiy ldap contents): osixia/phpldapadmin:0.5.0
+- PhpLdapAdmin (just to have a convenient way to visualize/modifiy ldap contents): osixia/phpldapadmin:0.6.9
   - address: `https://localhost` admin dn: `cn=admin,dc=example,dc=org` admin password: `admin`
 - Jbosse fuse (**you need to build this image yourself**): https://github.com/paoloantinori/dockerfiles/tree/master/centos/fuse
 
@@ -17,14 +17,14 @@ When the script finish you should be able to check fuse container's local ports 
 ```
 $ docker ps
 CONTAINER ID        IMAGE                        COMMAND                CREATED             STATUS              PORTS                                                                                                                                                  NAMES
-9e996ab8e080        fuse6.2.1:latest               "/bin/sh -c 'service   About an hour ago   Up About an hour    0.0.0.0:49153->44444/tcp, 0.0.0.0:49154->61616/tcp, 0.0.0.0:49155->8101/tcp, 0.0.0.0:49156->8181/tcp, 0.0.0.0:49157->1099/tcp, 0.0.0.0:49158->22/tcp   root
+9e996ab8e080        fuse6.3:latest               "/bin/sh -c 'service   About an hour ago   Up About an hour    0.0.0.0:49153->44444/tcp, 0.0.0.0:49154->61616/tcp, 0.0.0.0:49155->8101/tcp, 0.0.0.0:49156->8181/tcp, 0.0.0.0:49157->1099/tcp, 0.0.0.0:49158->22/tcp   root
 398aa9b12fc8        osixia/phpldapadmin:0.5.0    "/sbin/my_init"        About an hour ago   Up About an hour    80/tcp, 0.0.0.0:443->443/tcp                                                                                                                           phpldapadmin
 38b8e0885dbf        valdar/ldapfuseusers:1.0.0   "/sbin/my_init"        About an hour ago   Up About an hour    0.0.0.0:389->389/tcp                                                                                                                                   openldap
 ```
 in this example the hawtio console would be at `http://localhost:49156`, activeMQ at `localhost:49154`, karaf console at `localhost:49155` and ssh into the container at `localhost:49158`.
 
 ## NOTE Before launching the script:
-Before launching the script you need to build fuse6.2.1 image yourself by download JBoss Fuse distribution from
+Before launching the script you need to build fuse6.3 image yourself by download JBoss Fuse distribution from
 
 http://www.jboss.org/products/fuse
 
@@ -37,5 +37,9 @@ The build process will extract in the Docker image all the zip files it will fin
     # check if base image has been updated
 	docker pull pantinor/fuse
 
-    # build your docker fuse image. you are expected to have either a copy of jboss-fuse-full-6.2.1.0.redhat-084.zip or a link to that file in the current folder.
-    docker build --rm -t fuse6.2.1 .
+    # build your docker fuse image. you are expected to have either a copy of jboss-fuse-karaf-6.3.x.redhat-y.zip or a link to that file in the current folder.
+    docker build --rm -t fuse6.3 .
+
+# Instructions for Fuse 6.2.1
+
+Instructions and code for this same lab targeting Fuse 6.2.1 has been moved to his own branch: https://github.com/valdar/fuseLdapAuthentcation/tree/fuse-6.2.1
